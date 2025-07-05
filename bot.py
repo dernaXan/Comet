@@ -9,7 +9,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} ist online!")
+    print(f"{bot.user} ist online!", flush=True)
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
