@@ -11,6 +11,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"{bot.user} ist online!", flush=True)
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
-bot.run(TOKEN)
+def start():
+    TOKEN = os.getenv("DISCORD_TOKEN")
+    print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
+    bot.run(TOKEN)
