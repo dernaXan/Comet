@@ -29,15 +29,15 @@ async def save_data(server_id, user, data):
     
 #slash commands
 @bot.slash_command(name="addpoints")
-@commands.has_permission(administrator=True)
-async def addpoints(ctx, member:discord.Member, points:int)
+@commands.has_permissions(administrator=True)
+async def addpoints(ctx, member:discord.Member, points:int):
     data = await get_data(ctx.guild.id, member.id)
     data["points"] += points
     await save_data(ctx.guild.id, member.id, data)
 
 @bot.slash_command(name="subtractpoints")
-@commands.has_permission(administrator=True)
-async def subtractpoints(ctx, member:discord.Member, points:int)
+@commands.has_permissions(administrator=True)
+async def subtractpoints(ctx, member:discord.Member, points:int):
     data = await get_data(ctx.guild.id, member.id)
     data["points"] -= points
     await save_data(ctx.guild.id, member.id, data)
