@@ -1,16 +1,13 @@
-import os
 import discord
 from discord.ext import commands
+import os
 
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 @bot.event
 async def on_ready():
-  print(f"Bot ist eingeloggt als {bot.user}")
+    print(f"{bot.user} ist online!")
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-
-if TOKEN is None:
-  print("ERROR: Kein Token!", flush=True)
-  exit()
+print("RUNNING BOT...", flush=True)
 bot.run(TOKEN)
