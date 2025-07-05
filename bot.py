@@ -4,7 +4,6 @@ import os
 
 intents = discord.Intents.default()
 intents.members = True
-intent.messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
