@@ -11,6 +11,6 @@ async def on_ready():
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 if TOKEN is None:
-  print("ERROR: Kein Token!")
+  print("ERROR: Kein Token!", flush=True)
   exit()
 bot.run(TOKEN)
