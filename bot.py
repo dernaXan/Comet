@@ -6,10 +6,12 @@ intents = discord.Intents.default()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-
 @bot.event
 async def on_ready():
     print(f"{bot.user} ist online!", flush=True)
+
+#intern functions
+
 
 def start():
     TOKEN = os.getenv("DISCORD_TOKEN")
