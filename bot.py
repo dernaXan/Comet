@@ -35,7 +35,7 @@ async def get_server_data(server_id):
     return data
 
 async def is_mod(ctx, user_id):
-    modroleid = await get_server_data(ctx.guild.id)["modrole"]
+    modroleid = (await get_server_data(ctx.guild.id))["modrole"]
     modrole = ctx.guild.get_role(int(modroleid))
     user = await ctx.guild.fetch_member(int(user_id))
     return modrole in user.roles
