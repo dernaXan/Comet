@@ -15,18 +15,18 @@ def get_server_value(server_id: str):
 
 def update_user_data(server_id: str, user, value):
     ref = db.reference(f"servers/{server_id}/user/{user}")
-    ref.set(value)
+    ref.update(value)
 
 def get_user_data(server_id: str, user):
     ref = db.reference(f"servers/{server_id}/user/{user}")
     return ref.get() or {}
 
 def addServer(guild_id:int):
-  ref = db.reference(f"servers/{guild_id}/data")
-  try:
-    data = ref.get()
-  except firebase_admin.exceptions.NotFoundError:
-    data = None
+  guild_ref = db.reference(f"servers/{guild_id}")
+  if not guild_ref.get():
+    guild_ref.set({"data": {}, "user": {}})
+  ref = guild_ref.child("data")
+  data = ref.get()
   if not data:
     ref.set({
       'upload-notifications': {
