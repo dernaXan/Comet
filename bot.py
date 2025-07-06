@@ -1,38 +1,31 @@
 import discord
 from discord.ext import commands
 import os
-import aiohttp
+import firebaseData as fd
 import json
 
 intents = discord.Intents.default()
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+#events
 @bot.event
 async def on_ready():
     print(f"{bot.user} ist online!", flush=True)
 
-#intern functions
-async def get_data(server_id, user):
-    url = f"{os.getenv('DB_API_URL')}/data/get/{server_id}/user/{user}"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
-    return data
-    
-async def save_data(server_id, user, data):
-    url = f"{os.getenv('DB_API_URL')}/data/save/{server_id}/user/{user}"
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data) as resp:
-            ans = await resp.text()
-    return ans
+@bot.event
+async def on_guild_join(guild):
+    print(f"Bot wurde zu Server zugefügt: {guild.name}", flush=True)
 
-async def get_server_data(server_id):
-    url= f"{os.getenv('DB_API_URL')}/data/get/{server_id}/data"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
-    return data
+#intern functions
+def get_data(server_id, user):
+    return fd.get_user_data(server_id, user)
+    
+def save_data(server_id, user, data):
+    fd.update_user_data(server_id, user, data)
+
+def get_server_data(server_id):
+    return fd.get_server_data(server_id)
 
 async def is_mod(ctx, user_id):
     modroleid = (await get_server_data(ctx.guild.id))["modrole"]
@@ -45,19 +38,22 @@ async def is_mod(ctx, user_id):
 async def addpoints(ctx, member:discord.Member, points:int):
     if not await is_mod(ctx, ctx.author.id):
         return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
-    data = await get_data(ctx.guild.id, member.id)
+    data = get_data(ctx.guild.id, member.id)
     data["points"] += points
-    await save_data(ctx.guild.id, member.id, data)
+    save_data(ctx.guild.id, member.id, data)
+    return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte zugefügt!")
 
 @bot.slash_command(name="subtractpoints")
 async def subtractpoints(ctx, member:discord.Member, points:int):
     if not await is_mod(ctx, ctx.author.id):
         return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
-    data = await get_data(ctx.guild.id, member.id)
+    data = get_data(ctx.guild.id, member.id)
     data["points"] -= points
-    await save_data(ctx.guild.id, member.id, data)
+    save_data(ctx.guild.id, member.id, data)
+    return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte abgezogen!")
 
 def start():
     TOKEN = os.getenv("DISCORD_TOKEN")
     print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
+    fd.init()
     bot.run(TOKEN)
