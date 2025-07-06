@@ -8,7 +8,8 @@ def init():
       'databaseURL': 'https://dcbotcomet.firebaseio.com/' # Deine Projekt-URL
   })
   ref = db.reference("server")
-  ref.update({"_init": True})
+  if not ref.get():  # Falls "server" nicht existiert
+    ref.set({}) 
   print("Database initialized")
 
 def get_server_value(server_id: str):
