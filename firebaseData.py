@@ -23,7 +23,7 @@ def get_user_data(server_id: str, user):
 
 def addServer(guild_id:int):
   ref = db.reference(f"servers/{guild_id}/data")
-  if not ref.get():
+  if not ref.get() or {}:
     ref.set({
       'upload-notifications': {
         'yt': "",
@@ -35,7 +35,7 @@ def addServer(guild_id:int):
 
 def addUser(user, guild_id):
   ref = db.reference(f"servers/{guild_id}/user/{user}")
-  if not ref.get():
+  if not ref.get() or {}:
     ref.set({
       "tag": "",
       "points": 0,
