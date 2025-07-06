@@ -26,18 +26,33 @@ async def save_data(server_id, user, data):
         async with session.post(url, json=data) as resp:
             ans = await resp.text()
     return ans
+
+async def get_server_data(server_id):
+    url= f"{os.getenv('DB_API_URL')}/data/get/{server_id}/data"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            data = await resp.json()
+    return data
+
+async def is_mod(ctx, user_id):
+    modroleid = await get_server_data(ctx.guild.id)["modrole"]
+    modrole = ctx.guild.get_role(int(modroleid))
+    user = await ctx.guild.fetch_member(int(user_id))
+    return modrole in user.roles
     
 #slash commands
 @bot.slash_command(name="addpoints")
-@commands.has_permissions(administrator=True)
 async def addpoints(ctx, member:discord.Member, points:int):
+    if not await is_mod(ctx, ctx.author.id):
+        return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
     data = await get_data(ctx.guild.id, member.id)
     data["points"] += points
     await save_data(ctx.guild.id, member.id, data)
 
 @bot.slash_command(name="subtractpoints")
-@commands.has_permissions(administrator=True)
 async def subtractpoints(ctx, member:discord.Member, points:int):
+    if not await is_mod(ctx, ctx.author.id):
+        return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
     data = await get_data(ctx.guild.id, member.id)
     data["points"] -= points
     await save_data(ctx.guild.id, member.id, data)
