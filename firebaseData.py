@@ -23,7 +23,11 @@ def get_user_data(server_id: str, user):
 
 def addServer(guild_id:int):
   ref = db.reference(f"servers/{guild_id}/data")
-  if not ref.get() or {}:
+  try:
+    data = ref.get()
+  except firebase_admin.exceptions.NotFoundError:
+    data = None
+  if not data:
     ref.set({
       'upload-notifications': {
         'yt': "",
@@ -35,7 +39,11 @@ def addServer(guild_id:int):
 
 def addUser(user, guild_id):
   ref = db.reference(f"servers/{guild_id}/user/{user}")
-  if not ref.get() or {}:
+  try:
+    data = ref.get()
+  except firebase_admin.exceptions.NotFoundError:
+    data = None
+  if not data:
     ref.set({
       "tag": "",
       "points": 0,
