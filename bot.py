@@ -16,6 +16,7 @@ async def on_ready():
 @bot.event
 async def on_guild_join(guild):
     print(f"Bot wurde zu Server zugefügt: {guild.name}", flush=True)
+    fd.addServer(guild_id)
 
 #intern functions
 def get_data(server_id, user):
