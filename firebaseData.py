@@ -7,6 +7,8 @@ def init():
   firebase_admin.initialize_app(cred, {
       'databaseURL': 'https://dcbotcomet.firebaseio.com/' # Deine Projekt-URL
   })
+  ref = db.reference("server")
+  ref.update({"_init": True})
   print("Database initialized")
 
 def get_server_value(server_id: str):
