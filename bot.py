@@ -16,7 +16,15 @@ async def on_ready():
 @bot.event
 async def on_guild_join(guild):
     print(f"Bot wurde zu Server zugefügt: {guild.name}", flush=True)
-    fd.addServer(guild_id)
+    fd.addServer(guild.id)
+    members = await guild.fetch_members().flatten()
+    for member in members:
+        fd.addUser(member.id, guild.id)
+
+@bot.event
+async def on_member_join(member):
+    print(f"{member} ist dem Server beigetreten!")
+    fd.addUser(member.id, member.guild.id)
 
 #intern functions
 def get_data(server_id, user):
