@@ -5,7 +5,7 @@ from firebase_admin import db
 def init():
   cred = credentials.Certificate("/etc/secrets/FirebaseAccess.json")
   firebase_admin.initialize_app(cred, {
-      'databaseURL': 'https://dcbotcomet.firebaseio.com/' # Deine Projekt-URL
+      'databaseURL': 'https://dcbotcomet-default-rtdb.europe-west1.firebasedatabase.app/'
   })
   ref = db.reference("server")
   if not ref.get():  # Falls "server" nicht existiert
