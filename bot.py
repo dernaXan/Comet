@@ -25,7 +25,7 @@ def save_data(server_id, user, data):
     fd.update_user_data(server_id, user, data)
 
 def get_server_data(server_id):
-    return fd.get_server_data(server_id)
+    return fd.get_server_value(server_id)
 
 async def is_mod(ctx, user_id):
     modroleid = (await get_server_data(ctx.guild.id))["modrole"]
