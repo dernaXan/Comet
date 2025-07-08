@@ -72,9 +72,10 @@ def get_user_admin_guilds(user_id):
     result = []
     for guild in bot.guilds:
         member = guild.get_member(user_id)
-        if member and any(r.permissions.administator for r in member.roles):
+        if member and member.guild_permissions.administrator:
             result.append({"id": str(guild.id), "name": guild.name})
     return jsonify(result)
+
 
 @app.route("/guild/<int:guild_id>/roles")
 def get_guild_roles(guild_id):
