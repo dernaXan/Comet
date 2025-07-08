@@ -90,9 +90,13 @@ def get_guild_channels(guild_id):
     guild = bot.get_guild(guild_id)
     if not guild:
         return jsonify([])
-    channels = [{"id": str(ch.id), "name": ch.type.name}
-                for ch in guild.channels if hasattr(ch, "name")]
-    return jsonify(channels)
+    text_channels = [
+        {"id": str(ch.id), "name": ch.name}
+        for ch in guild.channels
+        if ch.type == discord.ChannelType.text
+    ]
+    return jsonify(text_channels)
+
 
 def run_flask():
     app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
