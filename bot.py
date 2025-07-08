@@ -3,6 +3,8 @@ from discord.ext import commands
 import os
 import firebaseData as fd
 import json
+from flask import Flask, jsonify
+import threading
 
 intents = discord.Intents.default()
 intents.members = True
@@ -62,8 +64,42 @@ async def subtractpoints(ctx, member:discord.Member, points:int):
     save_data(ctx.guild.id, member.id, data)
     return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte abgezogen!")
 
+#api
+app = Flask(__name__)
+
+@app.route("/user/<int:user_id>/admin_guilds")
+def get_user_admin_guilds(user_id):
+    result = []
+    for guild in bot.guilds:
+        member = guild.get_member(user_id):
+        if member and any(r.permisiions.administartor for r in member.roles):
+            result.append({"id": str(guild.id), "name": guild.name})
+    return jsonify(result)
+
+@app.route("/guild/<int:guild_id>/roles")
+def get_guild_roles(guild_id):
+    guild = bot.get_guild(guild_id)
+    if not guild:
+        return jsonify([])
+    roles = [{"id": str(role.id), "name": role.name} for role in guild.roles if not role.is_default()]
+    return jsonify(roles)
+
+@app.route("/guild/<int:guild_id>/channels")
+def get_guild_channels(guild_id):
+    guild = bot.get_guild(guild_id)
+    if not guild:
+        return jsonify([])
+    channels = [{"id": str(ch.id), "name": ch.type.name}
+                for ch in guild.channels if hasattr(ch, "name")]
+    return jsonify(channels)
+
+def run_flask():
+    app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
+
 def start():
     TOKEN = os.getenv("DISCORD_TOKEN")
+    print("RUNNING API")
+    threading.Thread(target=run_flask).start()
     print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
     fd.init()
     bot.run(TOKEN)
