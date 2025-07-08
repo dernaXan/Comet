@@ -71,7 +71,7 @@ app = Flask(__name__)
 def get_user_admin_guilds(user_id):
     result = []
     for guild in bot.guilds:
-        member = guild.get_member(user_id):
+        member = guild.get_member(user_id)
         if member and any(r.permisiions.administartor for r in member.roles):
             result.append({"id": str(guild.id), "name": guild.name})
     return jsonify(result)
