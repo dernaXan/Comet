@@ -67,6 +67,8 @@ async def subtractpoints(ctx, member:discord.Member, points:int):
 #api
 app = Flask(__name__)
 
+API_TOKEN = os.environ.get("API_TOKEN")
+
 @app.route("/user/<int:user_id>/admin_guilds")
 def get_user_admin_guilds(user_id):
     result = []
@@ -96,7 +98,39 @@ def get_guild_channels(guild_id):
         if ch.type == discord.ChannelType.text
     ]
     return jsonify(text_channels)
+    @app.route('/guild/<int:guild_id>/data/update', methods=['POST'])
 
+def update_guild_data(guild_id):
+    # Token aus Header auslesen und validieren
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or auth_header != f"Bearer {API_TOKEN}":
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # JSON Daten aus Request Body lesen
+    if not request.is_json:
+        return jsonify({"error": "Invalid or missing JSON"}), 400
+
+    data = request.get_json()
+    success = fd.update_server_value(guild_id, data)
+
+    if success:
+        return jsonify({"status": "success"}), 200
+    else:
+        return jsonify({"status": "failed"}), 500
+
+@app.route('/guild/<int:guild_id>/data/load', methods=['GET'])
+def load_guild_data(guild_id):
+    # Token aus Header auslesen und validieren
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or auth_header != f"Bearer {API_TOKEN}":
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Daten abrufen
+    data = fd.get_server_data(guild_id)
+    if data is None:
+        return jsonify({"error": "Data not found"}), 404
+
+    return jsonify({"data": data}), 200
 
 def run_flask():
     app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
