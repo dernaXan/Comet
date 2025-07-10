@@ -15,6 +15,10 @@ def init():
 def get_server_value(server_id: str):
     ref = db.reference(f"servers/{server_id}/data")
     return ref.get() or {}
+    
+def update_server_value(server_id: str, data):
+    ref = db.reference(f"servers/{server_id}/data")
+    ref.update(value)
 
 def update_user_data(server_id: str, user, value):
     ref = db.reference(f"servers/{server_id}/user/{user}")
