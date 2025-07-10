@@ -18,7 +18,7 @@ def get_server_value(server_id: str):
     
 def update_server_value(server_id: str, data):
     ref = db.reference(f"servers/{server_id}/data")
-    ref.update(value)
+    ref.update(data)
 
 def update_user_data(server_id: str, user, value):
     ref = db.reference(f"servers/{server_id}/user/{user}")
