@@ -17,8 +17,12 @@ def get_server_value(server_id: str):
     return ref.get() or {}
     
 def update_server_value(server_id: str, data):
-    ref = db.reference(f"servers/{server_id}/data")
-    ref.update(data)
+    try:
+        ref = db.reference(f"servers/{server_id}/data")
+        ref.update(data)
+        return True
+    except:
+        return False
 
 def update_user_data(server_id: str, user, value):
     ref = db.reference(f"servers/{server_id}/user/{user}")
