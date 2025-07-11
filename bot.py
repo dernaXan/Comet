@@ -103,6 +103,7 @@ def get_guild_channels(guild_id):
 def update_guild_data(guild_id):
     # Token aus Header auslesen und validieren
     auth_header = request.headers.get('Authorization')
+    print(auth_header, flush=True)
     if not auth_header or auth_header != f"Bearer {API_TOKEN}":
         return jsonify({"error": "Unauthorized"}), 401
 
