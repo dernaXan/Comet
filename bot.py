@@ -3,7 +3,7 @@ from discord.ext import commands
 import os
 import firebaseData as fd
 import json
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import threading
 
 intents = discord.Intents.default()
