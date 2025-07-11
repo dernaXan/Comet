@@ -126,7 +126,7 @@ def load_guild_data(guild_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     # Daten abrufen
-    data = fd.get_server_data(guild_id)
+    data = fd.get_server_value(guild_id)
     if data is None:
         return jsonify({"error": "Data not found"}), 404
 
