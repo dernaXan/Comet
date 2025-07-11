@@ -98,8 +98,8 @@ def get_guild_channels(guild_id):
         if ch.type == discord.ChannelType.text
     ]
     return jsonify(text_channels)
-    @app.route('/guild/<int:guild_id>/data/update', methods=['POST'])
-
+    
+@app.route('/guild/<int:guild_id>/data/update', methods=['POST'])
 def update_guild_data(guild_id):
     # Token aus Header auslesen und validieren
     auth_header = request.headers.get('Authorization')
