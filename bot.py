@@ -123,7 +123,7 @@ async def trophies(ctx, brawler:str=None):
             color=discord.Color.random()
         )
     embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
-    ctx.respond(embed=embed)
+    await ctx.respond(embed=embed)
 
 #api
 app = Flask(__name__)
