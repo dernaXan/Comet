@@ -52,16 +52,18 @@ async def is_mod(ctx, user_id):
     
 #slash commands
 @bot.slash_command(name="addpoints")
-async def addpoints(ctx, member:discord.Member, points:int):
+async def addpoints(ctx, member:discord.Member, points):
+    points = int(points)
     if not await is_mod(ctx, ctx.author.id):
         return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
     data = get_data(ctx.guild.id, member.id)
-    data["points"] += points
+    data["points"] -= points
     save_data(ctx.guild.id, member.id, data)
     return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte zugefügt!")
 
 @bot.slash_command(name="subtractpoints")
-async def subtractpoints(ctx, member:discord.Member, points:int):
+async def subtractpoints(ctx, member:discord.Member, points):
+    points = int(points)
     if not await is_mod(ctx, ctx.author.id):
         return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
     data = get_data(ctx.guild.id, member.id)
