@@ -5,7 +5,7 @@ API_TOKEN = os.environ.get("BS_API_KEY")
 BASE_URL = "https://api.brawlstars.com/v1"
 
 headers = {
-  "Authorization": f"Bearer {API_KEY}"
+  "Authorization": f"Bearer {API_TOKEN}"
 }
 
 def get_player(player_tag):
