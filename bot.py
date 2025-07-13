@@ -15,8 +15,11 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 #events
 @bot.event
 async def on_ready():
-    await bot.tree.sync(guild=discord.Object(id=1393573850947522580))
     print(f"{bot.user} ist online!", flush=True)
+
+@bot.event
+async def on_connect():
+    await bot.sync_commands()
 
 @bot.event
 async def on_guild_join(guild):
