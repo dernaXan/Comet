@@ -11,7 +11,7 @@ headers = {
 def get_player(player_tag):
   url = f"{BASE_URL}/players{player_tag.replace('#', '%23')}"
   r = requests.get(url, headers=headers)
-  print(data.text(), flush=True)
+  print(r.text(), flush=True)
 
   if r.status_code == 200:
     data = r.json()
