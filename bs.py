@@ -16,4 +16,4 @@ def get_player(player_tag):
     data = r.json()
     return data
   else:
-    return r.json()
+    return {}
