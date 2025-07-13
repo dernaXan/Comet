@@ -5,6 +5,7 @@ import firebaseData as fd
 import json
 from flask import Flask, jsonify, request
 import threading
+import bs
 
 intents = discord.Intents.default()
 intents.members = True
@@ -63,6 +64,41 @@ async def subtractpoints(ctx, member:discord.Member, points:int):
     data["points"] -= points
     save_data(ctx.guild.id, member.id, data)
     return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte abgezogen!")
+
+@bot.slash_command(name="points")
+async def points(ctx, member:discord.Member=None):
+    if not member:
+        member = ctx.author
+    data = get_data(ctx.guild.id, member.id)
+    points = data["points"]
+    embed = discord.Embed(
+        title=f"Punkte von {member.display_name}:",
+        description=f"{member.mention} hat **{points}** Punkte!",
+        color=discord.Color.random()
+    )
+    embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+
+    await ctx.send(embed=embed)
+
+@bot.slash_command(name="savetag")
+async def savetag(ctx, tag:str):
+    data = bs.get_player(tag)
+    if data:
+        save_data(ctx.guild.id, ctx.author.id, {"tag": tag})
+        name = data.name
+        embed = discord.Embed(
+            title="Spielertag gespeichert!",
+            description=f"Du hast deinen Brawlstars account({name}) mit dem Tag {tag} erfolgreich verbunden!\n{ctx.author.mention}",
+            color=discord.Color.random()
+        )
+    else:
+        embed = discord.Embed(
+            title="Spieler nicht gefunden!",
+            description=f"Das Spielertag {tag} existiert nicht!\n{ctx.author.mention}",
+            color=discord.Color.red()
+        )
+    embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+    await ctx.send(embed=embed)
 
 #api
 app = Flask(__name__)
