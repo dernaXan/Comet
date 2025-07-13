@@ -82,7 +82,7 @@ async def points(ctx, member:discord.Member=None):
     )
     embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
 
-    await ctx.send(embed=embed)
+    await ctx.respond(embed=embed)
 
 @bot.slash_command(name="savetag")
 async def savetag(ctx, tag:str):
@@ -102,7 +102,28 @@ async def savetag(ctx, tag:str):
             color=discord.Color.red()
         )
     embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
-    await ctx.send(embed=embed)
+    await ctx.respond(embed=embed)
+
+@bot.slash_command(name="trophies")
+async def trophies(ctx, brawler:str=None):
+    tag = get_data(ctx.guild.id, ctx.author.id).get('tag', '')
+    if not tag:
+        embed = discord.Embed(
+            title="Kein Spielertag",
+            description=f"Du hast noch kein Spielertag hinterlegt! Nutze dazu `/savetag SPIELERTAG` und ersetze **SPIELERTAG** mit deinem Ingame Spielertag!\n{ctx.author.mention}",
+            color=discord.Color.red()
+        )
+    else:
+        data = bs.get_player(tag)
+        trophies = data.get('brawlers', {}).get(brawler.upper(), {}).get('trophies', '0') if brawler else data.get('trophies', '0')
+        plustext = f" auf dem Brawler **{brawler}**." if brawler else "."
+        embed = discord.Embed(
+            title=f"Trophäen von {ctx.author.display_name}",
+            description=f"Der Spieler **{data.get('name', 'Unknown')}** a.k.a {ctx.author.mention} hat insgesamt {trophies}"+plustext,
+            color=discord.Color.random()
+        )
+    embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
+    ctx.respond(embed=embed)
 
 #api
 app = Flask(__name__)
