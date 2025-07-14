@@ -89,6 +89,7 @@ async def points(ctx, member:discord.Member=None):
 @bot.slash_command(name="savetag")
 async def savetag(ctx, tag:str):
     data = bs.get_player(tag)
+    print("data:", data)
     if data:
         save_data(ctx.guild.id, ctx.author.id, {"tag": tag})
         name = data.name
