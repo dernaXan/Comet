@@ -92,7 +92,7 @@ async def savetag(ctx, tag:str):
     print("data:", data, flush=True)
     if data:
         save_data(ctx.guild.id, ctx.author.id, {"tag": tag})
-        name = data.name
+        name = data.get("name", "UNKNOWN")
         embed = discord.Embed(
             title="Spielertag gespeichert!",
             description=f"Du hast deinen Brawlstars account({name}) mit dem Tag {tag} erfolgreich verbunden!\n{ctx.author.mention}",
