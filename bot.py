@@ -197,7 +197,7 @@ class SupportView(discord.ui.View):
 
 @bot.slash_command(name="setup_support", description="Setzt den Support auf(nur 1x nötig)")
 async def setup_support(ctx):
-    if not (await is_mod(ctx.guild.id, ctx.author.id)):
+    if not (await is_mod(ctx, ctx.author.id)):
         ctx.respond("Nur Mods können das!", ephemeral=True)
     view = SupportView()
     embed = discord.Embed(
