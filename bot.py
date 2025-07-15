@@ -118,7 +118,14 @@ async def trophies(ctx, brawler:str=None):
         )
     else:
         data = bs.get_player(tag)
-        trophies = data.get('brawlers', {}).get(brawler.upper(), {}).get('trophies', '0') if brawler else data.get('trophies', '0')
+        trophies = data.get('trophies', 0) if not brawler else 0
+        if brawler:
+            brawlers = data.get("brawlers", [{}])
+            for b in brawlers:
+                if b.get("name", "UNKNOWN") == brawler:
+                    trophies = b.get("trophies", 0)
+                    
+            
         plustext = f" auf dem Brawler **{brawler}**." if brawler else "."
         embed = discord.Embed(
             title=f"Trophäen von {ctx.author.display_name}",
