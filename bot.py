@@ -6,6 +6,7 @@ import json
 from flask import Flask, jsonify, request
 import threading
 import bs
+import random
 
 intents = discord.Intents.default()
 intents.members = True
@@ -16,6 +17,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"{bot.user} ist online!", flush=True)
+    bot.add_view(CloseTicketView())
+    bot.add_view(SupportView())
 
 @bot.event
 async def on_connect():
@@ -33,6 +36,25 @@ async def on_guild_join(guild):
 async def on_member_join(member):
     print(f"{member} ist dem Server beigetreten!")
     fd.addUser(member.id, member.guild.id)
+    channelid = fd.get_server_value(member.guild.id)["welcomechannel"]
+    channel = member.guild.get_channel(channelid)
+    
+    if channel is not None:
+        messages = [
+    "👋 Willkommen {member} auf dem Server! Schön, dass du da bist!",
+    "Hey {member}, willkommen in der Community! 🎉",
+    "{member} ist neu hier – sagt hallo! 👋",
+    "🎮 {member} ist jetzt offiziell Teil des Servers!",
+    "Ein epischer Moment: {member} ist da! 🚀",
+    "Willkommen an Bord, {member}! ⚓",
+    "{member}, du bist jetzt Teil der Crew! 🤝",
+    "Yay! {member} ist dem Server beigetreten! 🥳",
+    "Hey {member}, fühl dich wie zu Hause! 🏡",
+    "Achtung, Legende im Anflug: {member} ist gelandet! 💥"
+]
+        msg = random.choice(messages).format(member=member.mention)
+        embed = discord.Embed(title=f"Willkommen, {member.display_name}!", description=msg, color=discord.Color.random())
+        channel.send(embed=embed)
 
 #intern functions
 def get_data(server_id, user):
@@ -134,6 +156,59 @@ async def trophies(ctx, brawler:str=None):
         )
     embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     await ctx.respond(embed=embed)
+    
+# support
+class CloseTicketView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="Ticket schließen", style=discord.ButtonStyle.red, custom_id="close_ticket")
+    async def close_ticket(self, button, interaction):
+        await interaction.channel.send("Ticket wird geschlossen...")
+        await interaction.channel.edit(archived=True, locked=True)
+
+class SupportView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        
+    @discord.ui.button(label="Ticket erstellen", style=discord.ButtonStyle.blurple, custom_id="create_ticket")
+    async def create_ticket(self, button, interaction):
+        guild = interaction.guild
+        user = interaction.user
+        
+        existing_thread = discord.utils.get(guild.threads, name=f"ticket-{user.name}")
+        if existing_thread:
+            await interaction.response.send_message(f"Du hast bereits ein Ticket geöffnet. [Hier öffnen](https://discord.com/channels/{existing_thread.guild.id}/{existing_thread.id})", ephemeral=True)
+            return
+        thread = await interaction.channel.create_thread(
+            name=f"ticket-{user.name}",
+            type=discord.ChannelType.private_thread,
+            invitable=False
+        )
+        await thread.add_user(user)
+    
+        role = discord.utils.get(guild.roles, name="Supporter")
+        for member in role.members:
+            await thread.add_user(member)
+        
+        await thread.send(f"{user.mention} hat ein neues Support-Ticket eröffnet. {role.mention}")
+        await thread.send("Wenn dein Problem gelöst ist, klicke hier:", view=CloseTicketView())
+        await interaction.response.send_message(f"Es wurde ein neues Ticket erstellt: [Hier öffnen](https://discord.com/channels/{thread.guild.id}/{thread.id})", ephemeral=True)
+
+
+@bot.slash_command(name="setup_support", description="Setzt den Support auf(nur 1x nötig)")
+async def setup_support(ctx):
+    if not is_mod(ctx.author.id):
+        ctx.respond("Nur Mods können das!", ephemeral=True)
+    view = SupportView()
+    embed = discord.Embed(
+        title="Support",
+        description="Klicke unten, um ein privates Support-Ticket zu öffnen.",
+        color=0x00aaff
+    )
+    await ctx.channel.send(embed=embed, view=view)
+    await ctx.respond("Support-System wurde eingerichtet.", ephemeral=True)
+
+
 
 #api
 app = Flask(__name__)
