@@ -122,7 +122,7 @@ async def trophies(ctx, brawler:str=None):
         if brawler:
             brawlers = data.get("brawlers", [{}])
             for b in brawlers:
-                if b.get("name", "UNKNOWN") == brawler:
+                if b.get("name", "UNKNOWN") == brawler.upper():
                     trophies = b.get("trophies", 0)
                     
             
