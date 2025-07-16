@@ -19,6 +19,18 @@ async def on_ready():
     print(f"{bot.user} ist online!", flush=True)
     bot.add_view(CloseTicketView())
     bot.add_view(SupportView())
+    for guild in bot.guilds:
+        print(f"Checking Members of {guild.name}")
+        users = fd.get_users(guild.id)
+        async for member in guild.fetch_members(limit=None):
+            if member.bot:
+                continue
+            user_id = member.id
+            if user_id not in users:
+                fd.addUser(user_id, guild.id)
+                print(f"Added User {member.user_name} from server {guild.name}")
+                
+    print("Synchronizing completed")
 
 @bot.event
 async def on_connect():
