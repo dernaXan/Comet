@@ -33,7 +33,7 @@ def get_user_data(server_id: str, user):
     return ref.get() or {}
     
 def get_users(server_id:int):
-    ref = db.reference(f"servers/{server_id}}/user")
+    ref = db.reference(f"servers/{server_id}/user")
     return ref.keys()
 
 def addServer(guild_id:int):
