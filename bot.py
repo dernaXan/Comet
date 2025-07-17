@@ -292,7 +292,65 @@ async def setup_support(ctx):
     await ctx.channel.send(embed=embed, view=view)
     await ctx.respond("Support-System wurde eingerichtet.", ephemeral=True)
 
+def get_shop_data(guild_id):
+    raw_data = get_server_data(guild_id)["shop_data"]
+    return json.loads(raw_data)
 
+def create_shop_embed(shop_items, page, items_per_page=4):
+    embed = discord.Embed(title="🛒 Shop", color=discord.Color.blue())
+    start = page * items_per_page
+    end = start + items_per_page
+    page_items = shop_items[start:end]
+
+    if not page_items:
+        embed.description = "❌ Keine Items auf dieser Seite."
+        return embed
+
+    for item in page_items:
+        stock = "∞ verfügbar" if item["stock"] == -1 else f"{item['stock']} verfügbar"
+        embed.add_field(
+            name=f"{item['name']} – {item['price']} Punkte",
+            value=f"🆔 `{item['id']}`\n📦 {stock}",
+            inline=False
+        )
+
+    embed.set_footer(text=f"Seite {page+1}/{(len(shop_items)-1)//items_per_page+1}")
+    return embed
+
+class ShopView(discord.ui.View):
+    def __init__(self, shop_items, timeout=60):
+        super().__init__(timeout=timeout)
+        self.shop_items = shop_items
+        self.page = 0
+        self.message = None
+
+    async def update(self, interaction: discord.Interaction):
+        embed = create_shop_embed(self.shop_items, self.page)
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="◀️ Zurück", style=discord.ButtonStyle.secondary)
+    async def previous(self, button, interaction: discord.Interaction):
+        if self.page > 0:
+            self.page -= 1
+            await self.update(interaction)
+
+    @discord.ui.button(label="▶️ Weiter", style=discord.ButtonStyle.secondary)
+    async def next(self, button, interaction: discord.Interaction):
+        if (self.page + 1) * 4 < len(self.shop_items):
+            self.page += 1
+            await self.update(interaction)
+
+@bot.slash_command(name="shop", description="Zeigt den Shop an")
+async def shop(ctx: discord.ApplicationContext):
+    shop_items = get_shop_data()
+
+    if not shop_items:
+        await ctx.respond("❌ Der Shop ist leer.", ephemeral=True)
+        return
+
+    embed = create_shop_embed(shop_items, page=0)
+    view = ShopView(shop_items)
+    await ctx.respond(embed=embed, view=view)
 
 #api
 app = Flask(__name__)
