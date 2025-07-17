@@ -56,7 +56,7 @@ async def on_ready():
         channel_id = await get_channel_id_from_alias(data.get("upload-notifications", {}).get("yt", ""))
         dc_channel = data.get("upload-notifications", {}).get("channel", "")
         last_video = data.get("upload-notifications", {}).get("last-vid", "")
-        notification_list.append({"yt": channel_id, "channel": dc_channel, "last": last-vid})
+        notification_list.append({"yt": channel_id, "channel": dc_channel, "last": last_video})
     print("Starting Youtube Channel Check Loop")
     check_youtube_feeds.start(notification_list)
 
@@ -120,7 +120,7 @@ async def on_guild_join(guild):
 async def on_member_join(member):
     print(f"{member} ist dem Server beigetreten!")
     fd.addUser(member.id, member.guild.id)
-    channelid = fd.get_server_value(member.guild.id)["welcomechannel"]
+    channelid = fd.get_server_value(member.guild.id).get("welcomechannel", "")
     channel = member.guild.get_channel(channelid)
     
     if channel is not None:
