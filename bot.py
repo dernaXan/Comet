@@ -44,7 +44,7 @@ async def on_ready():
             user_id = member.id
             if user_id not in users:
                 fd.addUser(user_id, guild.id)
-                print(f"Added User {member.user_name} from server {guild.name}")
+                print(f"Added User {member.display_name} from server {guild.name}")
                 
     print("Synchronizing completed")
     notification_list = []
