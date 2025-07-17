@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import os
 import firebaseData as fd
 import json
@@ -7,11 +7,27 @@ from flask import Flask, jsonify, request
 import threading
 import bs
 import random
+import aiohttp
+import re
+import asyncio
 
 intents = discord.Intents.default()
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+
+async def get_channel_id_from_alias(alias):
+    url = f"https://www.youtube.com/{alias.lstrip('@')}"  # z. B. https://www.youtube.com/MrBeast
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            html = await resp.text()
+            # Suche nach "channelId":"UCxxxxxx"
+            match = re.search(r'"channelId":"(UC[^\"]+)"', html)
+            if match:
+                return match.group(1)
+            else:
+                return None
 
 #events
 @bot.event
@@ -31,6 +47,62 @@ async def on_ready():
                 print(f"Added User {member.user_name} from server {guild.name}")
                 
     print("Synchronizing completed")
+    notification_list = []
+    for guild in bot.guilds:
+        print(f"Checking Youtube Handle of {guild.name}")
+        data = get_server_data(guild.id)
+        if not data.get("upload-notifications", {}).get("yt", ""):
+            continue
+        channel_id = await get_channel_id_from_alias(data.get("upload-notifications", {}).get("yt", ""))
+        dc_channel = data.get("upload-notifications", {}).get("channel", "")
+        last_video = data.get("upload-notifications", {}).get("last-vid", "")
+        notification_list.append({"yt": channel_id, "channel": dc_channel, "last": last-vid})
+    print("Starting Youtube Channel Check Loop")
+    check_youtube_feeds.start(notification_list)
+
+@tasks.loop(seconds=300)
+async def check_youtube_feeds(notification_list):
+    for ch in notification_list:
+        channel_id = ch.get("yt")  # YouTube Channel-ID (UCxxxx...)
+        dc_channel_id = ch.get("channel")  # Discord Channel-ID (int)
+        last_vid = ch.get("last")  # Letzte bekannte Video-ID ("" möglich)
+
+        rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
+        feed = feedparser.parse(rss_url)
+
+        if not feed.entries:
+            print(f"❌ Kein Video im Feed gefunden für {channel_id}")
+            continue
+
+        latest_entry = feed.entries[0]
+        video_id = latest_entry.yt_videoid
+        video_title = latest_entry.title
+        video_url = latest_entry.link
+
+        # Wenn kein Video bekannt ist ODER neues Video gefunden wurde
+        if last_vid == "" or video_id != last_vid:
+            dc_channel = bot.get_channel(dc_channel_id)
+            if dc_channel:
+                embed = discord.Embed(
+                    title="NEUES VIDEO!",
+                    description=f"# 📢 **{feed.feed.title.upper() if feed.feed else 'UNKNOWN'}** hat ein neues **Video** hochgeladen!\nSchaue [das Video]({video_url}) **jetzt** auf **YouTube** an!",
+                    color=disocrd.Color.random()
+                )
+                await channel.send(embed=embed)
+            else:
+                print(f"⚠️ Discord-Kanal {dc_channel_id} nicht gefunden.")
+
+            # Aktualisiere die gespeicherte Video-ID
+            ch["last"] = video_id
+
+@bot.slash_command(name="set_upload_notification_channel")
+async def set_upload_notification_channel(ctx):
+    if not is_mod(ctx, ctx.author.id):
+        return await ctx.respond("Du benötigst eine Moderatorenrolle um diesen Befehl zu nutzen!")
+    data = fd.get_server_value(ctx.guild.id)
+    data["upload-notifications"]["channel"] = ctx.channel.id
+    return await ctx.respond("Upload Notification Channel erfolgreich gesetzt!")
+        
 
 @bot.event
 async def on_connect():
