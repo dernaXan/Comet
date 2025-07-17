@@ -342,7 +342,7 @@ class ShopView(discord.ui.View):
 
 @bot.slash_command(name="shop", description="Zeigt den Shop an")
 async def shop(ctx: discord.ApplicationContext):
-    shop_items = get_shop_data()
+    shop_items = get_shop_data(ctx.guild.id)
 
     if not shop_items:
         await ctx.respond("❌ Der Shop ist leer.", ephemeral=True)
