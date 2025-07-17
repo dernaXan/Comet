@@ -10,6 +10,7 @@ import random
 import aiohttp
 import re
 import asyncio
+import feedparser
 
 intents = discord.Intents.default()
 intents.members = True
