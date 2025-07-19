@@ -61,8 +61,9 @@ async def on_ready():
     print("Starting Youtube Channel Check Loop")
     check_youtube_feeds.start(notification_list)
 
-@tasks.loop(seconds=300)
+@tasks.loop(seconds=60)
 async def check_youtube_feeds(notification_list):
+    print("Checking Channels", flush=True)
     for ch in notification_list:
         channel_id = ch.get("yt")  # YouTube Channel-ID (UCxxxx...)
         dc_channel_id = ch.get("channel")  # Discord Channel-ID (int)
