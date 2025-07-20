@@ -88,7 +88,7 @@ async def check_youtube_feeds(notification_list):
                 embed = discord.Embed(
                     title="NEUES VIDEO!",
                     description=f"# 📢 **{feed.feed.title.upper() if feed.feed else 'UNKNOWN'}** hat ein neues **Video** hochgeladen!\nSchaue [das Video]({video_url}) **jetzt** auf **YouTube** an!",
-                    color=disocrd.Color.random()
+                    color=discord.Color.random()
                 )
                 await channel.send(embed=embed)
             else:
@@ -140,7 +140,7 @@ async def on_member_join(member):
 ]
         msg = random.choice(messages).format(member=member.mention)
         embed = discord.Embed(title=f"Willkommen, {member.display_name}!", description=msg, color=discord.Color.random())
-        channel.send(embed=embed)
+        await channel.send(embed=embed)
 
 #intern functions
 def get_data(server_id, user):
@@ -298,49 +298,121 @@ def get_shop_data(guild_id):
     raw_data = get_server_data(guild_id)["shop_data"]
     return json.loads(raw_data)
 
-def create_shop_embed(shop_items, page, items_per_page=4):
-    embed = discord.Embed(title="🛒 Shop", color=discord.Color.blue())
-    start = page * items_per_page
-    end = start + items_per_page
-    page_items = shop_items[start:end]
+def save_shop_data(guild_id, data):
+    r = json.dumps(data)
+    sdata = get_server_data(guild_id)
+    sdata["shop_data"] = r
+    fd.update_server_value(guild_id, sdata)
 
-    if not page_items:
+def create_shop_embed(shop_items, page):
+    embed = discord.Embed(title="🛒 Shop", color=discord.Color.blue())
+    if page < 0 or page >= len(shop_items):
         embed.description = "❌ Keine Items auf dieser Seite."
         return embed
 
-    for item in page_items:
-        stock = "∞ verfügbar" if item["stock"] == -1 else f"{item['stock']} verfügbar"
-        embed.add_field(
-            name=f"{item['name']} – {item['price']} Punkte",
-            value=f"🆔 `{item['id']}`\n📦 {stock}",
-            inline=False
-        )
-
-    embed.set_footer(text=f"Seite {page+1}/{(len(shop_items)-1)//items_per_page+1}")
+    item = shop_items[page]
+    stock = "∞ verfügbar" if item["stock"] == -1 else f"{item['stock']} verfügbar"
+    embed.add_field(
+        name=f"{item['name']} – {item['price']} Punkte",
+        value=f"📦 {stock}",
+        inline=False
+    )
+    embed.set_footer(text=f"Seite {page+1}/{len(shop_items)}")
     return embed
 
+async def handle_purchase(interaction: discord.Interaction, item_id: str):
+    guild_id = interaction.guild.id
+    user_id = interaction.user.id
+    member = interaction.user
+
+    # Daten abrufen
+    shop_data = get_shop_data(guild_id)
+    item = next((i for i in shop_data if i["id"] == item_id), None)
+
+    if not item:
+        await interaction.response.send_message("❌ Dieses Item existiert nicht mehr.", ephemeral=True)
+        return
+
+    # Verfügbarkeit prüfen
+    if item["stock"] == 0:
+        await interaction.response.send_message("❌ Dieses Item ist ausverkauft.", ephemeral=True)
+        return
+
+    # Punkte prüfen
+    user_data = get_data(guild_id, user_id)
+    user_points = user_data.get("points", 0)
+    if user_points < item["price"]:
+        await interaction.response.send_message("❌ Du hast nicht genug Punkte.", ephemeral=True)
+        return
+
+    # Punkte abziehen & Stock verringern
+    user_data["points"] -= item["price"]
+    save_data(guild_id, user_id, user_data)
+
+    if item["stock"] != -1:
+        item["stock"] -= 1
+        save_shop_data(guild_id, shop_data)
+
+    # Modchat informieren
+    modchat_id = get_server_data(guild_id).get("modchat", 0)
+    if modchat_id:
+        modchat = interaction.guild.get_channel(modchat_id)
+        if modchat:
+            await modchat.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu.")
+
+    await interaction.response.send_message(f"✅ Du hast **{item['name']}** gekauft!", ephemeral=True)
+
 class ShopView(discord.ui.View):
-    def __init__(self, shop_items, timeout=60):
+    def __init__(self, shop_items, page=0, timeout=60):
         super().__init__(timeout=timeout)
         self.shop_items = shop_items
-        self.page = 0
+        self.page = page
         self.message = None
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.clear_items()
+        self.add_item(self.PreviousButton())
+        self.add_item(self.NextButton())
+
+        # Kaufbutton nur hinzufügen, wenn Item existiert & verfügbar
+        if 0 <= self.page < len(self.shop_items):
+            item = self.shop_items[self.page]
+            if item["stock"] != 0:
+                self.add_item(self.BuyButton(item_id=item["id"], label=f"Kaufen ({item['price']} Punkte)"))
 
     async def update(self, interaction: discord.Interaction):
+        self.update_buttons()
         embed = create_shop_embed(self.shop_items, self.page)
         await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="◀️ Zurück", style=discord.ButtonStyle.secondary)
-    async def previous(self, button, interaction: discord.Interaction):
-        if self.page > 0:
-            self.page -= 1
-            await self.update(interaction)
+    class PreviousButton(discord.ui.Button):
+        def __init__(self):
+            super().__init__(label="◀️ Zurück", style=discord.ButtonStyle.secondary)
 
-    @discord.ui.button(label="▶️ Weiter", style=discord.ButtonStyle.secondary)
-    async def next(self, button, interaction: discord.Interaction):
-        if (self.page + 1) * 4 < len(self.shop_items):
-            self.page += 1
-            await self.update(interaction)
+        async def callback(self, interaction: discord.Interaction):
+            view: ShopView = self.view
+            if view.page > 0:
+                view.page -= 1
+                await view.update(interaction)
+
+    class NextButton(discord.ui.Button):
+        def __init__(self):
+            super().__init__(label="▶️ Weiter", style=discord.ButtonStyle.secondary)
+
+        async def callback(self, interaction: discord.Interaction):
+            view: ShopView = self.view
+            if view.page + 1 < len(view.shop_items):
+                view.page += 1
+                await view.update(interaction)
+
+    class BuyButton(discord.ui.Button):
+        def __init__(self, item_id: str, label: str):
+            super().__init__(label=label, style=discord.ButtonStyle.success)
+            self.item_id = item_id
+
+        async def callback(self, interaction: discord.Interaction):
+            await handle_purchase(interaction, self.item_id)
 
 @bot.slash_command(name="shop", description="Zeigt den Shop an")
 async def shop(ctx: discord.ApplicationContext):
