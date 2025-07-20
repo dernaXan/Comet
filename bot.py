@@ -104,6 +104,7 @@ async def set_upload_notification_channel(ctx):
         return await ctx.respond("Du benötigst eine Moderatorenrolle um diesen Befehl zu nutzen!")
     data = fd.get_server_value(ctx.guild.id)
     data["upload-notifications"]["channel"] = ctx.channel.id
+    fd.update_server_value(ctx.server.id, data)
     return await ctx.respond("Upload Notification Channel erfolgreich gesetzt!")
         
 
