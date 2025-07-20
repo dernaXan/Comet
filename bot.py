@@ -354,13 +354,20 @@ async def handle_purchase(interaction: discord.Interaction, item_id: str):
         save_shop_data(guild_id, shop_data)
 
     # Modchat informieren
-    modchat_id = get_server_data(guild_id).get("modchat", 0)
-    if modchat_id:
+    modchat_id = int(get_server_data(guild_id).get("modchat", 0))
+    modrole_id = int(get_server_data(guild_id).get("modrole", 0))
+    if modchat_id and modrole_id:
         modchat = interaction.guild.get_channel(modchat_id)
-        if modchat:
-            await modchat.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu.")
+        modrole = interaction.guild.get_role(modrole_id)
+        if modchat and modrole:
+            msg = await modchat.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}")
+        else:
+            msg = await interaction.channel.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}")
+    else:
+        msg = await interaction.channel.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}")
+    await msg.pin()
 
-    await interaction.response.send_message(f"✅ Du hast **{item['name']}** gekauft!", ephemeral=True)
+    await interaction.response.send_message(f"✅ Du hast **{item['name']}** gekauft! Ein Moderator wird dir deinen Kauf in kürze zustellen!", ephemeral=True)
 
 class ShopView(discord.ui.View):
     def __init__(self, shop_items, page=0, timeout=60):
@@ -424,7 +431,7 @@ async def shop(ctx: discord.ApplicationContext):
 
     embed = create_shop_embed(shop_items, page=0)
     view = ShopView(shop_items)
-    await ctx.respond(embed=embed, view=view)
+    await ctx.respond(embed=embed, view=view, ephemeral=True)
 
 #api
 app = Flask(__name__)
