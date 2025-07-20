@@ -36,6 +36,7 @@ async def on_ready():
     print(f"{bot.user} ist online!", flush=True)
     bot.add_view(CloseTicketView())
     bot.add_view(SupportView())
+    bot.add_view(DeliveryClaimView(None, None, None))
     for guild in bot.guilds:
         print(f"Checking Members of {guild.name}")
         users = fd.get_users(guild.id)
@@ -320,6 +321,30 @@ def create_shop_embed(shop_items, page):
     embed.set_footer(text=f"Seite {page+1}/{len(shop_items)}")
     return embed
 
+class DeliveryClaimView(discord.ui.View):
+    def __init__(self, member, item, modrole):
+        super().__init__(timeout=None)  # persistent view
+        self.member = member
+        self.item = item
+        self.modrole = modrole
+
+    @discord.ui.button(label="Zustellung claimen", style=discord.ButtonStyle.primary, custom_id="delivery_claim_button")
+    async def claim_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        # Sicherstellen, dass nur Mods den Button klicken können (optional)
+        if self.modrole not in interaction.user.roles:
+            await interaction.response.send_message("Du hast keine Berechtigung, das zu claimen.", ephemeral=True)
+            return
+
+        # Nachricht updaten: Button entfernen und Text ändern
+        self.clear_items()  # entfernt alle Buttons
+
+        new_content = (f"✅ Zustellung von **{self.item['name']}** an {self.member.mention} wurde von "
+                       f"{interaction.user.mention} als zugestellt markiert.")
+        
+        await interaction.message.edit(content=new_content, view=None)
+        await interaction.response.send_message("Zustellung wurde erfolgreich als zugestellt markiert.", ephemeral=True)
+
+
 async def handle_purchase(interaction: discord.Interaction, item_id: str):
     guild_id = interaction.guild.id
     user_id = interaction.user.id
@@ -356,17 +381,30 @@ async def handle_purchase(interaction: discord.Interaction, item_id: str):
     # Modchat informieren
     modchat_id = int(get_server_data(guild_id).get("modchat", 0))
     modrole_id = int(get_server_data(guild_id).get("modrole", 0))
+
     if modchat_id and modrole_id:
         modchat = interaction.guild.get_channel(modchat_id)
         modrole = interaction.guild.get_role(modrole_id)
         if modchat and modrole:
-            msg = await modchat.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}")
+            view = DeliveryClaimView(member, item, modrole)
+            msg = await modchat.send(
+                f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}",
+                view=view
+            )
         else:
-            msg = await interaction.channel.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}")
+            view = DeliveryClaimView(member, item, modrole)
+            msg = await interaction.channel.send(
+                f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}",
+                view=view
+            )
     else:
-        msg = await interaction.channel.send(f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}")
-    await msg.pin()
+        view = DeliveryClaimView(member, item, modrole)
+        msg = await interaction.channel.send(
+            f"📦 {member.mention} hat **{item['name']}** gekauft. Bitte stellt es ihm zu. {modrole.mention}",
+            view=view
+        )
 
+    await msg.pin()
     await interaction.response.send_message(f"✅ Du hast **{item['name']}** gekauft! Ein Moderator wird dir deinen Kauf in kürze zustellen!", ephemeral=True)
 
 class ShopView(discord.ui.View):
