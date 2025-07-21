@@ -17,24 +17,6 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-
-async def get_channel_id_from_alias(alias):
-    url = f"https://www.youtube.com/{alias.lstrip('@')}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    }
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=headers) as resp:
-            html = await resp.text()
-            # Suche nach channelId oder externalId
-            match = re.search(r'"channelId":"(UC[^\"]+)"', html) or re.search(r'"externalId":"(UC[^\"]+)"', html)
-            if match:
-                return match.group(1)
-            else:
-                print(f"❌ Keine Channel-ID gefunden für Alias {alias}")
-                return None
-
 #events
 @bot.event
 async def on_ready():
@@ -60,7 +42,7 @@ async def on_ready():
         data = get_server_data(guild.id)
         if not data.get("upload-notifications", {}).get("yt", ""):
             continue
-        channel_id = await get_channel_id_from_alias(data.get("upload-notifications", {}).get("yt", ""))
+        channel_id = data.get("upload-notifications", {}).get("yt", "")
         dc_channel = data.get("upload-notifications", {}).get("channel", "")
         last_video = data.get("upload-notifications", {}).get("last-vid", "")
         notification_list.append({"yt": channel_id, "channel": dc_channel, "last": last_video})
