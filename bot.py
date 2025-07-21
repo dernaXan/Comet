@@ -60,6 +60,10 @@ async def check_youtube_feeds(notification_list):
         rss_url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
         feed = feedparser.parse(rss_url)
 
+        print(f"Feed Title: {feed.feed.title if 'title' in feed.feed else 'Kein Titel'}", flush=True)
+        print(f"Anzahl der Videos im Feed: {len(feed.entries)}", flush=True)
+
+
         if not feed.entries:
             print(f"❌ Kein Video im Feed gefunden für {channel_id}")
             continue
