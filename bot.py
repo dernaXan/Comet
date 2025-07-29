@@ -490,6 +490,19 @@ async def on_message(message):
         if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
             conv_history = await build_conversation_history(message)
             print(conv_history, flush=True)
+            url = "https://50201b710e3c.ngrok-free.app/cometai/stream"
+            json_data = {"prompt": message.content, "history": conv_history}
+            bot_msg = await message.reply("Die Anfrage wird bearbeitet...")
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=json_data) as resp:
+                    if resp.status != 200:
+                        await bot_msg.edit(content="Es ist ein Fehler bei der Anfrage aufgetreten: "+str(resp.status))
+                        return
+                    response = ""
+                    async for chunk in resp.content.iter_chunked(1024):
+                        await bot_msg.edit(content=response + chunk.decode("utf-8"))
+                        response += chunk.decode("utf-8")
+                        await asyncio.sleep(0.2)
 
 
 #api
