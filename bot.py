@@ -506,6 +506,7 @@ async def on_message(message):
                         await bot_msg.edit(content=response + chunk.decode("utf-8"))
                         response += chunk.decode("utf-8")
                         await asyncio.sleep(0.2)
+            await bot_msg.add_reaction("✅")
     await bot.process_commands(message)
 
 #api
