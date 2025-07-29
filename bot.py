@@ -489,7 +489,7 @@ async def on_message(message):
             referenced_msg = None
         if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
             conv_history = await build_conversation_history(message)
-            print(conv_history)
+            print(conv_history, flsuh=True)
 
 
 #api
