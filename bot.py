@@ -501,6 +501,8 @@ async def on_message(message):
                         return
                     response = ""
                     async for chunk in resp.content.iter_chunked(1024):
+                        if chunk.decode("utf-8") == "":
+                            continue
                         await bot_msg.edit(content=response + chunk.decode("utf-8"))
                         response += chunk.decode("utf-8")
                         await asyncio.sleep(0.2)
