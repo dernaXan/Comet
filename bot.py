@@ -492,9 +492,10 @@ async def on_message(message):
             print(conv_history, flush=True)
             url = "https://50201b710e3c.ngrok-free.app/cometai/stream"
             json_data = {"prompt": message.content, "history": conv_history}
+            headers = {"ngrok-skip-browser-warning": "true"}
             bot_msg = await message.reply("Die Anfrage wird bearbeitet...")
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=json_data) as resp:
+                async with session.post(url, json=json_data, headers=headers) as resp:
                     if resp.status != 200:
                         await bot_msg.edit(content="Es ist ein Fehler bei der Anfrage aufgetreten: "+str(resp.status))
                         return
