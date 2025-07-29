@@ -463,6 +463,35 @@ async def shop(ctx: discord.ApplicationContext):
     view = ShopView(shop_items)
     await ctx.respond(embed=embed, view=view, ephemeral=True)
 
+# CometAI
+async def build_conversation_history(message):
+    history = []
+    current_msg = message
+    while True:
+        role = "assistant" if current_msg.author == bot.user else "user"
+        history.insert(0, {"role": role, "content": current_msg.content})
+        if not current_msg.reference or not current_msg.reference.message_id:
+            break
+        try:
+            current_msg = await current_msg.channel.fetch_message(current_msg.reference.message_id)
+        except discord.NotFound:
+            break
+    return history
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    if message.reference:
+        try:
+            referenced_msg = await message.channel.fetch_message(message.reference.message_id)
+        except discord.NotFound:
+            referenced_msg = None
+        if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
+            conv_history = await build_conversation_history(message)
+            print(conv_history)
+
+
 #api
 app = Flask(__name__)
 
