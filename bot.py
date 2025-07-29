@@ -490,7 +490,7 @@ async def on_message(message):
         if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
             conv_history = await build_conversation_history(message)
             print(conv_history, flush=True)
-            url = "https://50201b710e3c.ngrok-free.app/cometai/stream"
+            url = "https://ladybird-hopeful-shark.ngrok-free.app/cometai/stream"
             json_data = {"prompt": message.content, "history": conv_history}
             headers = {"ngrok-skip-browser-warning": "true"}
             bot_msg = await message.reply("Die Anfrage wird bearbeitet...")
