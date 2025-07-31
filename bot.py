@@ -11,6 +11,7 @@ import aiohttp
 import re
 import asyncio
 import feedparser
+import time
 
 intents = discord.Intents.default()
 intents.members = True
