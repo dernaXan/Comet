@@ -464,7 +464,7 @@ async def shop(ctx: discord.ApplicationContext):
     await ctx.respond(embed=embed, view=view, ephemeral=True)
 
 # CometAI
-@bot.slash_command(name="CometAI", description="Rede mit der brandneuen CometAI!")
+@bot.slash_command(name="cometai", description="Rede mit der brandneuen CometAI!")
 async def cometai(ctx):
     return await ctx.respond("Hallo, mein Name ist CometAI, wie kann ich dir helfen?")
     
