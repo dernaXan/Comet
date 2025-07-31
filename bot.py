@@ -504,12 +504,16 @@ async def on_message(message):
                         await bot_msg.edit(content="Es ist ein Fehler bei der Anfrage aufgetreten: "+str(resp.status))
                         return
                     response = ""
+                    last_edit_time = time.time()
                     async for chunk in resp.content.iter_chunked(1024):
                         if not chunk.decode("utf-8").strip():
                             continue
-                        await bot_msg.edit(content=response + chunk.decode("utf-8"))
                         response += chunk.decode("utf-8")
-                        await asyncio.sleep(0.2)
+                         now = time.time()
+                         if not now - last_edit_time >= 0.2:
+                             continue
+                        await bot_msg.edit(content=response + chunk.decode("utf-8"))
+                        last_edit_time = now
             await bot_msg.add_reaction("✅")
     await bot.process_commands(message)
 
