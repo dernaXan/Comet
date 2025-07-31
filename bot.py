@@ -510,9 +510,9 @@ async def on_message(message):
                         if not chunk.decode("utf-8").strip():
                             continue
                         response += chunk.decode("utf-8")
-                         now = time.time()
-                         if not now - last_edit_time >= 0.2:
-                             continue
+                        now = time.time()
+                        if not now - last_edit_time >= 0.2:
+                            continue
                         await bot_msg.edit(content=response + chunk.decode("utf-8"))
                         last_edit_time = now
             await bot_msg.add_reaction("✅")
