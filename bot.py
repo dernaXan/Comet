@@ -474,6 +474,9 @@ def download_cometAI(url, save_as):
     else:
         raise Exception(f"Failed to download Comet: {response.status_code}")
         
+        
+download_comet = lambda: download_cometAI("raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "cometai.py")
+        
     
 async def generate_response_stream(prompt, history):
     import cometai
@@ -517,29 +520,23 @@ async def on_message(message):
         except discord.NotFound:
             referenced_msg = None
         if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
-            import CometAI
+            try:
+                import cometai
+            except:
+                await message.reply("CometAI ist nicht wach!")
             conv_history = await build_conversation_history(message)
             print(conv_history, flush=True)
-            url = "https://ladybird-hopeful-shark.ngrok-free.app/cometai/stream"
-            json_data = {"prompt": message.content, "history": conv_history}
-            headers = {"ngrok-skip-browser-warning": "true"}
+            response_text = ""
             bot_msg = await message.reply("Die Anfrage wird bearbeitet...")
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=json_data, headers=headers) as resp:
-                    if resp.status != 200:
-                        await bot_msg.edit(content="Es ist ein Fehler bei der Anfrage aufgetreten: "+str(resp.status))
-                        return
-                    response = ""
-                    last_edit_time = time.time()
-                    async for chunk in resp.content.iter_chunked(1024):
-                        if not chunk.decode("utf-8").strip():
-                            continue
-                        response += chunk.decode("utf-8")
-                        now = time.time()
-                        if not now - last_edit_time >= 0.2:
-                            continue
-                        await bot_msg.edit(content=response + chunk.decode("utf-8"))
-                        last_edit_time = now
+            now = time.time()
+            last_edit = now
+            async for chunk in generate_response_stream(message.content, conv_history):
+                response_text += chunk
+                now = time.time()
+                if now - last_edit >= 0.2:
+                    await bot_msg.edit(content=response_text)
+                    last_edit = now
+            
             await bot_msg.add_reaction("✅")
     await bot.process_commands(message)
 
