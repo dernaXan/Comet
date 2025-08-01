@@ -465,6 +465,29 @@ async def shop(ctx: discord.ApplicationContext):
     await ctx.respond(embed=embed, view=view, ephemeral=True)
 
 # CometAI
+# nb
+def download_notebook(url, save_as):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(save_as, "wb") as f:
+            f.write(response.content)
+    else:
+        raise Exception(f"Failed to download Notebook: {response.status_code}")
+    
+def execute_notebook():
+    try:
+        print("Starting Notebook Execution...", flush=True)
+        download_notebook("raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "CometAI.py")
+        pm.execute_notebook("CometAI.ipynb")
+        print("Notebook execution finished.", flush=True)
+    except Exception as e:
+        print(f"Error during notebook execution: {str(e)}", flush=True)
+        
+def refresh_notebook():
+    thread = threading.Thread(target=execute_notebook)
+    thread.start()
+        
+#dc
 @bot.slash_command(name="cometai", description="Rede mit der brandneuen CometAI!")
 async def cometai(ctx):
     return await ctx.respond("Hallo, mein Name ist CometAI, wie kann ich dir helfen?")
@@ -493,6 +516,7 @@ async def on_message(message):
         except discord.NotFound:
             referenced_msg = None
         if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
+            import CometAI
             conv_history = await build_conversation_history(message)
             print(conv_history, flush=True)
             url = "https://ladybird-hopeful-shark.ngrok-free.app/cometai/stream"
@@ -586,6 +610,11 @@ def load_guild_data(guild_id):
         return jsonify({"error": "Data not found"}), 404
 
     return jsonify({"data": data}), 200
+    
+@app.route('/cometai/refresh', methods=['GET'])
+def cometai_refresh():
+    refresh_notebook()
+    return jsonify({'status': 'started', 'message': 'Notebook execution started in background'})
 
 def run_flask():
     app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
@@ -595,5 +624,6 @@ def start():
     print("RUNNING API")
     threading.Thread(target=run_flask).start()
     print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
+    refresh_notebook()
     fd.init()
     bot.run(TOKEN)
