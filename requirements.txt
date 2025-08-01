@@ -6,3 +6,4 @@ firebase-admin
 feedparser
 llama-cpp-python
 ddgs
+huggingface-hub
