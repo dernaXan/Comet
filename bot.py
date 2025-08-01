@@ -523,7 +523,7 @@ async def on_message(message):
             try:
                 import cometai
             except:
-                await message.reply("CometAI ist nicht wach!")
+                return await message.reply("CometAI ist nicht wach!\n[CometAI aufwecken](https://dcbot-cr1m.onrender.com/cometai/refresh)\n> Hinweis: Das Aufwecken kann kurz zeit in Anspruch nehmen!")
             conv_history = await build_conversation_history(message)
             print(conv_history, flush=True)
             response_text = ""
