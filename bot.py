@@ -476,7 +476,7 @@ def download_cometAI(url, save_as):
         raise Exception(f"Failed to download Comet: {response.status_code}")
         
         
-download_comet = lambda: download_cometAI("raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "cometai.py")
+download_comet = lambda: download_cometAI("https://raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "cometai.py")
         
     
 async def generate_response_stream(prompt, history):
