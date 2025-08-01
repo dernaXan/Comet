@@ -545,7 +545,10 @@ async def on_message(message):
             now = time.time()
             last_edit = now
             async for chunk in generate_response_stream(message.content, conv_history):
+                if not chunk:
+                    continue
                 response_text += chunk
+                print(response_text, flush=True)
                 now = time.time()
                 if now - last_edit >= 0.2:
                     await bot_msg.edit(content=response_text)
