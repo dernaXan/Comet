@@ -466,26 +466,27 @@ async def shop(ctx: discord.ApplicationContext):
 
 # CometAI
 # nb
-def download_notebook(url, save_as):
+def download_cometAI(url, save_as):
     response = requests.get(url)
     if response.status_code == 200:
         with open(save_as, "wb") as f:
             f.write(response.content)
     else:
-        raise Exception(f"Failed to download Notebook: {response.status_code}")
-    
-def execute_notebook():
-    try:
-        print("Starting Notebook Execution...", flush=True)
-        download_notebook("raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "CometAI.py")
-        pm.execute_notebook("CometAI.ipynb")
-        print("Notebook execution finished.", flush=True)
-    except Exception as e:
-        print(f"Error during notebook execution: {str(e)}", flush=True)
+        raise Exception(f"Failed to download Comet: {response.status_code}")
         
-def refresh_notebook():
-    thread = threading.Thread(target=execute_notebook)
-    thread.start()
+    
+async def generate_response_stream(prompt, history):
+    import cometai
+    loop = asyncio.get_event_loop()
+    gen = cometai.cometai_response_stream(prompt, history)  # sync generator
+
+    # Generator in Async "umwandeln"
+    while True:
+        try:
+            chunk = await loop.run_in_executor(None, next, gen)
+            yield chunk
+        except StopIteration:
+            break
         
 #dc
 @bot.slash_command(name="cometai", description="Rede mit der brandneuen CometAI!")
@@ -613,8 +614,8 @@ def load_guild_data(guild_id):
     
 @app.route('/cometai/refresh', methods=['GET'])
 def cometai_refresh():
-    refresh_notebook()
-    return jsonify({'status': 'started', 'message': 'Notebook execution started in background'})
+    download_comet()
+    return jsonify({'status': 'started', 'message': 'CometAI execution started in background'})
 
 def run_flask():
     app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
@@ -624,6 +625,6 @@ def start():
     print("RUNNING API")
     threading.Thread(target=run_flask).start()
     print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
-    refresh_notebook()
+    download_comet()
     fd.init()
     bot.run(TOKEN)
