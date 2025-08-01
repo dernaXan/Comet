@@ -13,6 +13,8 @@ import asyncio
 import feedparser
 import time
 import requests
+import importlib.util
+import sys
 
 intents = discord.Intents.default()
 intents.members = True
@@ -466,6 +468,7 @@ async def shop(ctx: discord.ApplicationContext):
     await ctx.respond(embed=embed, view=view, ephemeral=True)
 
 # CometAI
+cometai = None
 # nb
 def download_cometAI(url, save_as):
     response = requests.get(url)
@@ -473,14 +476,26 @@ def download_cometAI(url, save_as):
         with open(save_as, "wb") as f:
             f.write(response.content)
     else:
-        raise Exception(f"Failed to download Comet: {response.status_code}")
-        
-        
-download_comet = lambda: download_cometAI("https://raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "cometai.py")
+        raise Exception(f"Failed to download CometAI: {response.status_code}")
+
+def load_cometai_module():
+    module_name = "cometai"
+    file_path = os.path.abspath("cometai.py")
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+    return module  # <- return the loaded module object
+
+def download_comet():
+    global cometai
+    download_cometAI("https://raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "cometai.py")
+    cometai = load_cometai_module()
         
     
 async def generate_response_stream(prompt, history):
-    import cometai
     loop = asyncio.get_event_loop()
     gen = cometai.cometai_response_stream(prompt, history)  # sync generator
 
@@ -521,9 +536,7 @@ async def on_message(message):
         except discord.NotFound:
             referenced_msg = None
         if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
-            try:
-                import cometai
-            except:
+            if not cometai:
                 return await message.reply("CometAI ist nicht wach!\n[CometAI aufwecken](https://dcbot-cr1m.onrender.com/cometai/refresh)\n> Hinweis: Das Aufwecken kann kurz zeit in Anspruch nehmen!")
             conv_history = await build_conversation_history(message)
             print(conv_history, flush=True)
