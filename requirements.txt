@@ -4,3 +4,5 @@ python-dotenv
 requests
 firebase-admin
 feedparser
+llama-cpp
+ddgs
