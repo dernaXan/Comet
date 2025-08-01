@@ -12,6 +12,7 @@ import re
 import asyncio
 import feedparser
 import time
+import requests
 
 intents = discord.Intents.default()
 intents.members = True
