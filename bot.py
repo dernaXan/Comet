@@ -467,64 +467,6 @@ async def shop(ctx: discord.ApplicationContext):
     view = ShopView(shop_items)
     await ctx.respond(embed=embed, view=view, ephemeral=True)
 
-# CometAI
-cometai = None
-# nb
-def download_cometAI(url, save_as):
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(save_as, "wb") as f:
-            f.write(response.content)
-    else:
-        raise Exception(f"Failed to download CometAI: {response.status_code}")
-
-def load_cometai_module():
-    module_name = "cometai"
-    file_path = os.path.abspath("cometai.py")
-
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-
-    return module  # <- return the loaded module object
-
-def download_comet():
-    global cometai
-    download_cometAI("https://raw.githubusercontent.com/dernaxan/CometAI/main/CometAI.py", "cometai.py")
-    cometai = load_cometai_module()
-        
-    
-async def generate_response_stream(prompt, history):
-    loop = asyncio.get_event_loop()
-    gen = cometai.cometai_response_stream(prompt, history)  # sync generator
-
-    # Generator in Async "umwandeln"
-    while True:
-        try:
-            chunk = await loop.run_in_executor(None, next, gen)
-            yield chunk
-        except StopIteration:
-            break
-        
-#dc
-@bot.slash_command(name="cometai", description="Rede mit der brandneuen CometAI!")
-async def cometai(ctx):
-    return await ctx.respond("Hallo, mein Name ist CometAI, wie kann ich dir helfen?")
-    
-async def build_conversation_history(message):
-    history = []
-    current_msg = message
-    while True:
-        role = "assistant" if current_msg.author == bot.user else "user"
-        history.insert(0, {"role": role, "content": current_msg.content})
-        if not current_msg.reference or not current_msg.reference.message_id:
-            break
-        try:
-            current_msg = await current_msg.channel.fetch_message(current_msg.reference.message_id)
-        except discord.NotFound:
-            break
-    return history
 
 @bot.event
 async def on_message(message):
@@ -626,10 +568,6 @@ def load_guild_data(guild_id):
 
     return jsonify({"data": data}), 200
     
-@app.route('/cometai/refresh', methods=['GET'])
-def cometai_refresh():
-    download_comet()
-    return jsonify({'status': 'started', 'message': 'CometAI execution started in background'})
 
 def run_flask():
     app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
@@ -639,6 +577,5 @@ def start():
     print("RUNNING API")
     threading.Thread(target=run_flask).start()
     print(f"RUNNING BOT...\nRunning with Token: {TOKEN}", flush=True)
-    download_comet()
     fd.init()
     bot.run(TOKEN)
