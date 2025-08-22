@@ -192,11 +192,9 @@ async def subtractpoints(ctx, member:discord.Member, points):
     save_data(ctx.guild.id, member.id, data)
     return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte abgezogen!")
 
-@bot.slash_command(name="bs")
-async def bs(ctx):
-    pass
+bs = discord.SlashCommandGroup("bs", "Brawlstars")
 
-@bs.sub_command(name="savetag")
+@bs.command(name="savetag")
 async def savetag(ctx, tag:str):
     data = bs.get_player(tag)
     print("data:", data, flush=True)
@@ -217,7 +215,7 @@ async def savetag(ctx, tag:str):
     embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     await ctx.respond(embed=embed)
 
-@bs.sub_command(name="trophies")
+@bs.command(name="trophies")
 async def trophies(ctx, brawler:str=None):
     tag = get_data(ctx.guild.id, ctx.author.id).get('tag', '')
     if not tag:
