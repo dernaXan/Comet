@@ -538,6 +538,9 @@ def load_guild_data(guild_id):
         return jsonify({"error": "Data not found"}), 404
 
     return jsonify({"data": data}), 200
+
+bot.add_application_command(points)
+bot.add_application_command(bs)
     
 
 def run_flask():
