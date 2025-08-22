@@ -13,7 +13,6 @@ import asyncio
 import feedparser
 import time
 import requests
-import importlib.util
 import sys
 
 intents = discord.Intents.default()
@@ -154,27 +153,7 @@ async def is_mod(ctx, user_id):
     modrole = ctx.guild.get_role(int(modroleid))
     user = await ctx.guild.fetch_member(int(user_id))
     return modrole in user.roles
-    
-#slash commands
-@bot.slash_command(name="addpoints")
-async def addpoints(ctx, member:discord.Member, points):
-    points = int(points)
-    if not await is_mod(ctx, ctx.author.id):
-        return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
-    data = get_data(ctx.guild.id, member.id)
-    data["points"] += points
-    save_data(ctx.guild.id, member.id, data)
-    return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte zugefügt!")
 
-@bot.slash_command(name="subtractpoints")
-async def subtractpoints(ctx, member:discord.Member, points):
-    points = int(points)
-    if not await is_mod(ctx, ctx.author.id):
-        return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
-    data = get_data(ctx.guild.id, member.id)
-    data["points"] -= points
-    save_data(ctx.guild.id, member.id, data)
-    return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte abgezogen!")
 
 @bot.slash_command(name="points")
 async def points(ctx, member:discord.Member=None):
@@ -191,7 +170,32 @@ async def points(ctx, member:discord.Member=None):
 
     await ctx.respond(embed=embed)
 
-@bot.slash_command(name="savetag")
+#slash commands
+@points.sub_command(name="add")
+async def addpoints(ctx, member:discord.Member, points):
+    points = int(points)
+    if not await is_mod(ctx, ctx.author.id):
+        return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
+    data = get_data(ctx.guild.id, member.id)
+    data["points"] += points
+    save_data(ctx.guild.id, member.id, data)
+    return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte zugefügt!")
+
+@points.sub_command(name="subtract")
+async def subtractpoints(ctx, member:discord.Member, points):
+    points = int(points)
+    if not await is_mod(ctx, ctx.author.id):
+        return await ctx.respond(f"Du benötigst eine Moderatorrolle, um auf diese Funktion zugreifen zu können!", ephemeral=True)
+    data = get_data(ctx.guild.id, member.id)
+    data["points"] -= points
+    save_data(ctx.guild.id, member.id, data)
+    return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte abgezogen!")
+
+@bot.slash_command(name="bs")
+async def bs(ctx):
+    pass
+
+@bs.sub_command(name="savetag")
 async def savetag(ctx, tag:str):
     data = bs.get_player(tag)
     print("data:", data, flush=True)
@@ -212,7 +216,7 @@ async def savetag(ctx, tag:str):
     embed.set_footer(text=f"Angefordert von {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     await ctx.respond(embed=embed)
 
-@bot.slash_command(name="trophies")
+@bs.sub_command(name="trophies")
 async def trophies(ctx, brawler:str=None):
     tag = get_data(ctx.guild.id, ctx.author.id).get('tag', '')
     if not tag:
@@ -466,38 +470,6 @@ async def shop(ctx: discord.ApplicationContext):
     embed = create_shop_embed(shop_items, page=0)
     view = ShopView(shop_items)
     await ctx.respond(embed=embed, view=view, ephemeral=True)
-
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-    if message.reference:
-        try:
-            referenced_msg = await message.channel.fetch_message(message.reference.message_id)
-        except discord.NotFound:
-            referenced_msg = None
-        if referenced_msg and referenced_msg.author == bot.user and bot.user in message.mentions:
-            if not cometai:
-                return await message.reply("CometAI ist nicht wach!\n[CometAI aufwecken](https://dcbot-cr1m.onrender.com/cometai/refresh)\n> Hinweis: Das Aufwecken kann kurz zeit in Anspruch nehmen!")
-            conv_history = await build_conversation_history(message)
-            print(conv_history, flush=True)
-            response_text = ""
-            bot_msg = await message.reply("Die Anfrage wird bearbeitet...")
-            now = time.time()
-            last_edit = now
-            async for chunk in generate_response_stream(message.content, conv_history):
-                if not chunk:
-                    continue
-                response_text += chunk
-                print(response_text, flush=True)
-                now = time.time()
-                if now - last_edit >= 0.2:
-                    await bot_msg.edit(content=response_text)
-                    last_edit = now
-            
-            await bot_msg.add_reaction("✅")
-    await bot.process_commands(message)
 
 #api
 app = Flask(__name__)
