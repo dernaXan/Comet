@@ -154,9 +154,10 @@ async def is_mod(ctx, user_id):
     user = await ctx.guild.fetch_member(int(user_id))
     return modrole in user.roles
 
+points = discord.SlashCommandGroup("points", "Manage Points")
 
-@bot.slash_command(name="points")
-async def points(ctx, member:discord.Member=None):
+@points.command(name="show")
+async def showpoints(ctx, member:discord.Member=None):
     if not member:
         member = ctx.author
     data = get_data(ctx.guild.id, member.id)
@@ -171,7 +172,7 @@ async def points(ctx, member:discord.Member=None):
     await ctx.respond(embed=embed)
 
 #slash commands
-@points.sub_command(name="add")
+@points.command(name="add")
 async def addpoints(ctx, member:discord.Member, points):
     points = int(points)
     if not await is_mod(ctx, ctx.author.id):
@@ -181,7 +182,7 @@ async def addpoints(ctx, member:discord.Member, points):
     save_data(ctx.guild.id, member.id, data)
     return await ctx.respond(f"Der Moderator {ctx.author.mention} hat dem {member.mention} {points} Punkte zugefügt!")
 
-@points.sub_command(name="subtract")
+@points.command(name="subtract")
 async def subtractpoints(ctx, member:discord.Member, points):
     points = int(points)
     if not await is_mod(ctx, ctx.author.id):
