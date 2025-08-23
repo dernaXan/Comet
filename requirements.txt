@@ -4,6 +4,3 @@ python-dotenv
 requests
 firebase-admin
 feedparser
-llama-cpp-python
-ddgs
-huggingface-hub
