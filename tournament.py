@@ -35,8 +35,8 @@ def create_tournament(guild_id, name="", max_team_size=None):
         "guild_id": guild_id,
         "name": name,
         "status": "pending",  # pending | running | finished | cancelled
-        "teams": {},          # team_id: {name, captain, members, score}
-        "bracket": {},        # struktur für Matches/Runden
+        "teams": {"1":""},          # team_id: {name, captain, members, score}
+        "bracket": {"1":""},        # struktur für Matches/Runden
         "max_team_size": max_team_size,
         "created_at": time.time(),
         "last_updated": time.time()
