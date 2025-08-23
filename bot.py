@@ -14,6 +14,7 @@ import feedparser
 import time
 import requests
 import sys
+import tournament
 
 intents = discord.Intents.default()
 intents.members = True
@@ -470,11 +471,20 @@ async def shop(ctx: discord.ApplicationContext):
     view = ShopView(shop_items)
     await ctx.respond(embed=embed, view=view, ephemeral=True)
 
-#api
+# api
 app = Flask(__name__)
-
 API_TOKEN = os.environ.get("API_TOKEN")
 
+# -----------------------------
+# Hilfsfunktion für Auth
+# -----------------------------
+def authorize():
+    auth_header = request.headers.get('Authorization')
+    return auth_header == f"Bearer {API_TOKEN}"
+
+# -----------------------------
+# User / Guild Endpoints
+# -----------------------------
 @app.route("/user/<int:user_id>/admin_guilds")
 def get_user_admin_guilds(user_id):
     result = []
@@ -493,6 +503,7 @@ def get_guild_roles(guild_id):
     roles = [{"id": str(role.id), "name": role.name} for role in guild.roles if not role.is_default()]
     return jsonify(roles)
 
+
 @app.route("/guild/<int:guild_id>/channels")
 def get_guild_channels(guild_id):
     guild = bot.get_guild(guild_id)
@@ -504,44 +515,81 @@ def get_guild_channels(guild_id):
         if ch.type == discord.ChannelType.text
     ]
     return jsonify(text_channels)
-    
+
+
 @app.route('/guild/<int:guild_id>/data/update', methods=['POST'])
 def update_guild_data(guild_id):
-    # Token aus Header auslesen und validieren
-    auth_header = request.headers.get('Authorization')
-    print(auth_header, flush=True)
-    if not auth_header or auth_header != f"Bearer {API_TOKEN}":
+    if not authorize():
         return jsonify({"error": "Unauthorized"}), 401
 
-    # JSON Daten aus Request Body lesen
     if not request.is_json:
         return jsonify({"error": "Invalid or missing JSON"}), 400
 
     data = request.get_json()
     success = fd.update_server_value(guild_id, data)
+    return jsonify({"status": "success" if success else "failed"}), 200 if success else 500
 
-    if success:
-        return jsonify({"status": "success"}), 200
-    else:
-        return jsonify({"status": "failed"}), 500
 
 @app.route('/guild/<int:guild_id>/data/load', methods=['GET'])
 def load_guild_data(guild_id):
-    # Token aus Header auslesen und validieren
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or auth_header != f"Bearer {API_TOKEN}":
+    if not authorize():
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Daten abrufen
     data = fd.get_server_value(guild_id)
     if data is None:
         return jsonify({"error": "Data not found"}), 404
 
     return jsonify({"data": data}), 200
 
-bot.add_application_command(points)
-bot.add_application_command(bs)
-    
+# -----------------------------
+# Tournament Endpoints
+# -----------------------------
+@app.route('/guild/<int:guild_id>/tournaments', methods=['GET'])
+def get_guild_tournaments(guild_id):
+    tournaments = tournament.get_server_tournaments(guild_id)
+    return jsonify(tournaments), 200
+
+
+@app.route('/tournaments/<string:tournament_id>/load', methods=['GET'])
+def load_tournament(tournament_id):
+    _tournament = tournament.get_tournament(tournament_id)
+    if not _tournament:
+        return jsonify({"error": "Tournament not found"}), 404
+    return jsonify(_tournament), 200
+
+
+@app.route('/tournaments/<string:tournament_id>/update', methods=['PATCH'])
+def update_tournament_endpoint(tournament_id):
+    if not authorize():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not request.is_json:
+        return jsonify({"error": "Invalid or missing JSON"}), 400
+
+    data = request.get_json()
+    success = tournament.update_tournament(tournament_id, data)
+    if not success:
+        return jsonify({"error": "Tournament not found or failed"}), 404
+
+    return jsonify({"status": "success"}), 200
+
+
+@app.route('/tournaments/<string:tournament_id>/delete', methods=['DELETE'])
+def delete_tournament_endpoint(tournament_id):
+    if not authorize():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    success = tournament.delete_tournament(tournament_id)
+    if not success:
+        return jsonify({"error": "Tournament not found"}), 404
+    return jsonify({"status": "deleted"}), 200
+
+
+@app.route('/guild/<int:guild_id>/tournaments/new', methods=['GET'])
+def new_tournament(guild_id):
+    _tournament = tournament.create_tournament(guild_id)
+    return jsonify(_tournament), 201
+
 
 def run_flask():
     app.run(host="0.0.0.0", port=os.environ.get("PORT", 10000))
