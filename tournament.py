@@ -30,13 +30,22 @@ def create_tournament(guild_id, name="", max_team_size=None):
         if tournament_id not in all_tournaments:
             break
 
+    # Beispiel: Start-Team erstellen
+    start_team_id = "team1"
+    start_team = {
+        "name": "Start Team",
+        "captain": "",
+        "members": [],
+        "score": 0
+    }
+
     tournament = {
         "id": tournament_id,
         "guild_id": guild_id,
         "name": name,
         "status": "pending",  # pending | running | finished | cancelled
-        "teams": {"1":""},          # team_id: {name, captain, members, score}
-        "bracket": {"1":""},        # struktur für Matches/Runden
+        "teams": {start_team_id: start_team},   # Dict mit erstem Team
+        "bracket": {"1":"11"},                          # noch leer
         "max_team_size": max_team_size,
         "created_at": time.time(),
         "last_updated": time.time()
@@ -45,7 +54,6 @@ def create_tournament(guild_id, name="", max_team_size=None):
     # In Firebase speichern
     success = fd.update_universal_value('tournaments', {tournament_id: tournament})
     return tournament if success else False
-
 
 def get_tournament(tournament_id):
     """
