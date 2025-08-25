@@ -59,6 +59,7 @@ def get_tournament(tournament_id):
     """
     Holt ein Turnier anhand der ID.
     """
+    tournament_id = str(tournament_id)
     all_tournaments = fd.get_universal_value('tournaments')
     return all_tournaments.get(tournament_id, False)
 
@@ -68,6 +69,7 @@ def update_tournament(tournament_id, updates: dict):
     Aktualisiert ein bestehendes Turnier.
     `updates` ist ein Dict mit den Feldern, die geändert werden sollen.
     """
+    tournament_id = str(tournament_id)
     all_tournaments = fd.get_universal_value('tournaments')
     print("DEBUG tournaments:", all_tournaments.keys())
     print("DEBUG looking for:", tournament_id)
@@ -89,6 +91,7 @@ def delete_tournament(tournament_id):
     """
     Löscht ein Turnier anhand der ID.
     """
+    tournament_id = str(tournament_id)
     all_tournaments = fd.get_universal_value('tournaments')
 
     if tournament_id not in all_tournaments:
