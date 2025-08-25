@@ -65,25 +65,17 @@ def get_tournament(tournament_id):
 
 
 def update_tournament(tournament_id, updates: dict):
-    """
-    Aktualisiert ein bestehendes Turnier.
-    `updates` ist ein Dict mit den Feldern, die geändert werden sollen.
-    """
     tournament_id = str(tournament_id)
     all_tournaments = fd.get_universal_value('tournaments')
-    print("DEBUG tournaments:", all_tournaments.keys())
-    print("DEBUG looking for:", tournament_id)
 
     if tournament_id not in all_tournaments:
-        return False  # Turnier existiert nicht
+        return False
 
-    # Vorhandenes Turnier updaten
     all_tournaments[tournament_id].update(updates)
-    # Last updated timestamp setzen
     all_tournaments[tournament_id]['last_updated'] = time.time()
 
-    # In Firebase speichern
-    success = fd.update_universal_value('tournaments', {tournament_id: all_tournaments[tournament_id]})
+    # richtiges Update
+    success = fd.update_universal_value(f'tournaments/{tournament_id}', all_tournaments[tournament_id])
     return success
 
 
