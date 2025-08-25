@@ -69,6 +69,8 @@ def update_tournament(tournament_id, updates: dict):
     `updates` ist ein Dict mit den Feldern, die geändert werden sollen.
     """
     all_tournaments = fd.get_universal_value('tournaments')
+    print("DEBUG tournaments:", all_tournaments.keys())
+    print("DEBUG looking for:", tournament_id)
 
     if tournament_id not in all_tournaments:
         return False  # Turnier existiert nicht
